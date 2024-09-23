@@ -1,0 +1,14 @@
+{
+    "iPhone 13": {
+        "默认显卡": "iPhone 13 使用 Apple A15 Bionic，性能优越，支持高画质设置。"
+    },
+    "Samsung Galaxy S21": {
+        "默认显卡": "Samsung Galaxy S21 配备 Exynos 2100，表现良好，可支持高帧率模式。"
+    },
+    "Huawei P40": {
+        "默认显卡": "Huawei P40 搭载 Kirin 990，适合中高画质设置。"
+    },
+    "Xiaomi Mi 11": {
+        "默认显卡": "Xiaomi Mi 11 配备 Snapdragon 888，适合高画质和高帧率模式。"
+    }
+}

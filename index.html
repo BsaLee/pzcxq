@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三角洲行动配置查询器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #ff0000; /* 默认背景颜色 */
+            position: relative; /* 为按钮定位 */
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #fff;
+            font-size: 28px; /* 放大一号 */
+            font-weight: bold; /* 加粗 */
+        }
+
+        label {
+            font-size: 20px; /* 放大一号 */
+            margin: 10px 0;
+            color: #fff;
+            font-weight: bold; /* 加粗 */
+        }
+
+        input[list], input[type="text"] {
+            padding: 10px;
+            font-size: 18px; /* 放大一号 */
+            width: 300px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-weight: bold; /* 加粗 */
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 20px; /* 放大一号 */
+            font-weight: bold; /* 加粗 */
+            color: #fff;
+            text-align: center;
+        }
+
+        /* 按钮样式 */
+        .color-button {
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .button-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        /* 选中文本样式 */
+        ::selection {
+            background: #ff0000; /* 选中背景与页面背景一致 */
+            color: #fff; /* 选中时字体颜色 */
+        }
+    </style>
+</head>
+<body ondblclick="clearInputs()">
+    <h1>三角洲行动配置查询器</h1>
+
+    <label for="device-model">设备型号:</label>
+    <input type="text" id="device-model" list="device-models" placeholder="输入或选择设备型号">
+    <datalist id="device-models">
+        <!-- 动态加载设备型号 -->
+    </datalist>
+
+    <label for="gpu-config">显卡配置:</label>
+    <input type="text" id="gpu-config" list="gpu-configs" placeholder="输入或选择显卡配置">
+    <datalist id="gpu-configs">
+        <!-- 动态加载显卡配置 -->
+    </datalist>
+
+    <div id="result">根据上边的筛选规则显示的结果</div>
+
+    <!-- 按钮容器 -->
+    <div class="button-container">
+        <button class="color-button" style="background-color: #ff0000;" onclick="changeBackgroundColor('#ff0000')">红色</button>
+        <button class="color-button" style="background-color: #00ff00;" onclick="changeBackgroundColor('#00ff00')">绿色</button>
+        <button class="color-button" style="background-color: #0000ff;" onclick="changeBackgroundColor('#0000ff')">蓝色</button>
+        <button class="color-button" style="background-color: #ffff00;" onclick="changeBackgroundColor('#ffff00')">黄色</button>
+    </div>
+
+    <script>
+        const deviceModelInput = document.getElementById('device-model');
+        const gpuConfigInput = document.getElementById('gpu-config');
+        const resultDiv = document.getElementById('result');
+
+        let data = {};
+
+        function populateDatalists(data) {
+            const deviceModelsDatalist = document.getElementById('device-models');
+            const gpuConfigsDatalist = document.getElementById('gpu-configs');
+
+            const deviceModels = Object.keys(data);
+            const gpuConfigs = new Set();
+
+            deviceModels.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device;
+                deviceModelsDatalist.appendChild(option);
+
+                Object.keys(data[device]).forEach(gpu => gpuConfigs.add(gpu));
+            });
+
+            gpuConfigs.forEach(gpu => {
+                const option = document.createElement('option');
+                option.value = gpu;
+                gpuConfigsDatalist.appendChild(option);
+            });
+        }
+
+        function updateResult() {
+            const deviceModel = deviceModelInput.value;
+            const gpuConfig = gpuConfigInput.value;
+
+            if (deviceModel && gpuConfig) {
+                if (data[deviceModel] && data[deviceModel][gpuConfig]) {
+                    resultDiv.textContent = data[deviceModel][gpuConfig];
+                } else {
+                    resultDiv.textContent = "没有找到相关配置的结果。";
+                }
+            } else {
+                resultDiv.textContent = "根据上边的筛选规则显示的结果";
+            }
+        }
+
+        function handleDeviceModelInput() {
+            const deviceModel = deviceModelInput.value;
+
+            if (deviceModel && data[deviceModel]) {
+                const firstGpuConfig = Object.keys(data[deviceModel])[0];
+                gpuConfigInput.value = firstGpuConfig;
+                updateResult();
+            }
+        }
+
+        function handleInput(event) {
+            if (event.key === 'Enter') {
+                updateResult();
+            }
+        }
+
+        function clearInputs() {
+            deviceModelInput.value = '';
+            gpuConfigInput.value = '';
+            resultDiv.textContent = "根据上边的筛选规则显示的结果";
+
+            // 清除选中的文本
+            window.getSelection().removeAllRanges();
+        }
+
+        // 修改背景颜色的函数
+        function changeBackgroundColor(color) {
+            document.body.style.backgroundColor = color;
+
+            // 更新选中样式
+            const selectionStyle = `::selection { background: ${color}; color: #fff; }`;
+            const styleSheet = document.createElement("style");
+            styleSheet.innerHTML = selectionStyle;
+            document.head.appendChild(styleSheet);
+        }
+
+        // 加载JSON文件
+        async function loadJSON() {
+            try {
+                const response = await fetch('配置.json');
+                data = await response.json();
+                populateDatalists(data);
+            } catch (error) {
+                console.error("加载JSON文件时出错: ", error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadJSON);
+
+        deviceModelInput.addEventListener('input', handleDeviceModelInput);
+        gpuConfigInput.addEventListener('input', updateResult);
+
+        deviceModelInput.addEventListener('keydown', handleInput);
+        gpuConfigInput.addEventListener('keydown', handleInput);
+    </script>
+</body>
+</html>
